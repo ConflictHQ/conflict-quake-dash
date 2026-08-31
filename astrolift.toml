@@ -60,30 +60,6 @@ memory_limit = "384Mi"
     [workloads.containers.env]
     PYTHONUNBUFFERED = "1"
 
-# The agent half of the APP+Agent shape. run_family=task means it spawns as a
-# Job on dispatch and holds no standing resource, so it costs nothing until
-# `astro agent dispatch` runs it.
-#
-# run_mode is deliberately absent: WorkloadManifest has no such field, so
-# declaring one here parses cleanly and does nothing (astrolift-app#1680).
-# The trigger mode is set through the registration API until that lands.
-[[workloads]]
-name = "brief"
-kind = "agent"
-run_family = "task"
-cpu_request = "100m"
-cpu_limit = "500m"
-memory_request = "192Mi"
-memory_limit = "384Mi"
-
-  [[workloads.containers]]
-  name = "brief"
-  is_primary = true
-  command = ["python", "agent.py"]
-
-    [workloads.containers.env]
-    PYTHONUNBUFFERED = "1"
-
 [[managed_services]]
 kind = "object_store"
 name = "quake-data"

@@ -1,0 +1,43 @@
+# astrolift.toml — the agent half of the APP+Agent shape.
+#
+# Same repo as the dashboard, same image, own manifest. It lives here rather
+# than as a fourth workload in the root manifest because both the discovery
+# scanner (`scan_agent_manifests`) and the agent CI template keep a manifest
+# only when it declares exactly ONE workload of kind=agent: an
+# `agents/<slug>/astrolift.toml` describes one agent, and a root manifest with
+# mixed workloads is an app. Declared together, the root manifest was skipped
+# by the scanner and the CI job failed on "selected manifest must declare
+# exactly one agent workload".
+#
+# run_family=task means it spawns as a Job on dispatch and holds no standing
+# resource, so it costs nothing until `astro agent dispatch` runs it.
+#
+# run_mode is deliberately absent: WorkloadManifest has no such field, so
+# declaring one here parses cleanly and does nothing (astrolift-app#1680).
+# The trigger mode is set through the registration API until that lands.
+
+astrolift_version = 1
+name = "conflict-quake-brief"
+
+[app]
+slug = "conflict-quake-brief"
+display_name = "Seismic Brief"
+
+[environments.production]
+
+[[workloads]]
+name = "brief"
+kind = "agent"
+run_family = "task"
+cpu_request = "100m"
+cpu_limit = "500m"
+memory_request = "192Mi"
+memory_limit = "384Mi"
+
+  [[workloads.containers]]
+  name = "brief"
+  is_primary = true
+  command = ["python", "agent.py"]
+
+    [workloads.containers.env]
+    PYTHONUNBUFFERED = "1"
