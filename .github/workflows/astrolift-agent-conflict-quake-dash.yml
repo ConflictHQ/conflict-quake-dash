@@ -1,0 +1,47 @@
+# Managed by Astrolift — agent package validation. Source delivery is handled by the signed source webhook.
+# astrolift-managed: template-version=6 sha256=45095f1c094e820a
+name: astrolift agent package
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "astrolift.toml"
+      - "astrolift.agents.toml"
+  workflow_dispatch: {}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: astrolift-conflict-quake-dash
+  cancel-in-progress: true
+
+jobs:
+  validate-agent-package:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Validate selected agent manifest
+        env:
+          ASTROLIFT_AGENT_MANIFEST: "astrolift.toml"
+        run: |
+          python3 - <<'PY'
+          import os
+          import pathlib
+          import tomllib
+
+          path = pathlib.Path(os.environ['ASTROLIFT_AGENT_MANIFEST'])
+          if not path.is_file():
+              raise SystemExit(f'agent manifest not found: {path}')
+          data = tomllib.loads(path.read_text(encoding='utf-8'))
+          agents = [row for row in data.get('workloads', []) if row.get('kind') == 'agent']
+          if len(agents) != 1 or len(data.get('workloads', [])) != 1:
+              raise SystemExit('selected manifest must declare exactly one agent workload')
+          print(f"validated agent package: {path} ({agents[0].get('name', '?')})")
+          PY
+
+      - name: Package delivery contract
+        run: echo 'Astrolift freezes this source slice from the signed push webhook; this workflow does not deploy a standing app.'
