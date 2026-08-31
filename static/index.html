@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Seismic Activity — Astrolift demo</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,400..700&family=IBM+Plex+Sans:wght@400;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+<div class="shell">
+  <aside class="side">
+    <div class="brand">Seismic Activity<small>conflict-quake-dash</small></div>
+    <nav>
+      <a class="is-active" href="#overview">Overview</a>
+      <a href="#cadence">Cadence</a>
+      <a href="#distribution">Distribution</a>
+      <a href="#regions">Regions</a>
+    </nav>
+    <footer>
+      <div>running on Astrolift</div>
+      <div id="f-version">version —</div>
+      <div id="f-pod">pod —</div>
+      <div id="f-source">dataset —</div>
+      <div style="margin-top:.6rem"><a href="/debug">/debug</a> · <a href="/selftest">/selftest</a></div>
+    </footer>
+  </aside>
+
+  <main class="main">
+    <div class="head">
+      <div>
+        <h1 id="overview">USGS seismic activity</h1>
+        <p>A rolling 30-day event feed. A cronjob rebuilds the SQLite dataset and
+           puts it in this app's object store; this workload pulls it at boot and
+           on a timer. S3 is the data tier — there is no database to pay for.</p>
+      </div>
+      <span class="status status--ok" id="health">healthy</span>
+    </div>
+
+    <section class="tiles" id="tiles"></section>
+
+    <div class="grid">
+      <section class="panel span-12">
+        <div class="panel-head">
+          <h2 id="cadence">Events per day</h2>
+          <span class="hint">hover for the day</span>
+        </div>
+        <div class="panel-body"><div id="c-day"></div></div>
+      </section>
+
+      <section class="panel span-5">
+        <div class="panel-head">
+          <h2 id="distribution">Magnitude distribution</h2>
+          <button class="toggle" data-table="t-mag">table</button>
+        </div>
+        <div class="panel-body">
+          <div id="c-mag"></div>
+          <div id="t-mag" hidden></div>
+        </div>
+      </section>
+
+      <section class="panel span-7">
+        <div class="panel-head">
+          <h2>Depth against magnitude</h2>
+          <span class="hint">deeper events are darker</span>
+        </div>
+        <div class="panel-body"><div id="c-scatter"></div></div>
+      </section>
+
+      <section class="panel span-7">
+        <div class="panel-head">
+          <h2 id="regions">Most active regions</h2>
+          <span class="hint">by event count</span>
+        </div>
+        <div class="panel-body"><div id="t-regions"></div></div>
+      </section>
+
+      <section class="panel span-5">
+        <div class="panel-head">
+          <h2>Strongest events</h2>
+          <span class="hint">by magnitude</span>
+        </div>
+        <div class="panel-body"><div id="t-strongest"></div></div>
+      </section>
+    </div>
+  </main>
+</div>
+<div class="tip" id="tip"></div>
+<script src="/app.js"></script>
+</body>
+</html>

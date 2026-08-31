@@ -1,0 +1,91 @@
+# astrolift.toml — Astrolift app manifest
+#
+# Three workloads off one repo and one bound bucket:
+#   web      serves the dashboard, pulling the dataset from the object store
+#   refresh  a cronjob that rebuilds the dataset from the USGS feed
+#   brief    a kind=agent workload, dispatched rather than deployed
+#
+# The object_store binding injects BUCKET_NAME / BUCKET_REGION /
+# BUCKET_ENDPOINT into every bound workload (spec 05 §9.4).
+
+astrolift_version = 1
+name = "conflict-quake-dash"
+
+[app]
+slug = "conflict-quake-dash"
+display_name = "Seismic Activity"
+
+[environments.production]
+
+[[workloads]]
+name = "web"
+kind = "deployment"
+replicas = 1
+is_public = true
+cpu_request = "100m"
+cpu_limit = "500m"
+memory_request = "192Mi"
+memory_limit = "384Mi"
+
+  [[workloads.containers]]
+  name = "web"
+  is_primary = true
+  port = 8080
+
+    [workloads.containers.healthcheck]
+    kind = "http"
+    value = "/health"
+    port = 8080
+
+    [workloads.containers.env]
+    PYTHONUNBUFFERED = "1"
+    DATASET_REFRESH_SECONDS = "900"
+
+# Every four hours: often enough that the dashboard moves, rare enough that
+# the feed is not being hammered for a demo.
+[[workloads]]
+name = "refresh"
+kind = "cronjob"
+schedule = "0 */4 * * *"
+cpu_request = "100m"
+cpu_limit = "500m"
+memory_request = "192Mi"
+memory_limit = "384Mi"
+
+  [[workloads.containers]]
+  name = "refresh"
+  is_primary = true
+  command = ["python", "refresh.py"]
+
+    [workloads.containers.env]
+    PYTHONUNBUFFERED = "1"
+
+# The agent half of the APP+Agent shape. run_family=task means it spawns as a
+# Job on dispatch and holds no standing resource, so it costs nothing until
+# `astro agent dispatch` runs it.
+#
+# run_mode is deliberately absent: WorkloadManifest has no such field, so
+# declaring one here parses cleanly and does nothing (astrolift-app#1680).
+# The trigger mode is set through the registration API until that lands.
+[[workloads]]
+name = "brief"
+kind = "agent"
+run_family = "task"
+cpu_request = "100m"
+cpu_limit = "500m"
+memory_request = "192Mi"
+memory_limit = "384Mi"
+
+  [[workloads.containers]]
+  name = "brief"
+  is_primary = true
+  command = ["python", "agent.py"]
+
+    [workloads.containers.env]
+    PYTHONUNBUFFERED = "1"
+
+[[managed_services]]
+kind = "object_store"
+name = "quake-data"
+variant = "s3"
+bind_workloads = ["*"]
